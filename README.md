@@ -4,7 +4,7 @@ An agent that turns a VP's messy week — a meeting transcript, calendars, email
 
 Built for AIONOS Agentic AI Factory, Assignment 1.
 
-**Live demo:** ADD-YOUR-GITHUB-PAGES-LINK-HERE
+**Live demo:** https://vartiktripathi.github.io/executive-productivity-agent/
 **Demo video:** ADD-YOUR-DRIVE-LINK-HERE
 
 ## What it does
