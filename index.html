@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Executive Productivity Agent — Arjun Malhotra</title>
+<style>
+:root{--bg:#f6f6f4;--card:#fff;--ink:#1a1a18;--dim:#6b6b66;--line:#e2e2dd;--acc:#b4541f;--red:#b3261e;--amb:#8a6100;--grn:#1f6b3c;--blu:#1f4f8a}
+@media(prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:#16161a;--card:#1f1f24;--ink:#eceae5;--dim:#9b9b95;--line:#32323a;--acc:#e8875a;--red:#f28b82;--amb:#e0b44a;--grn:#7bc98f;--blu:#83b0e8}}
+:root[data-theme=dark]{--bg:#16161a;--card:#1f1f24;--ink:#eceae5;--dim:#9b9b95;--line:#32323a;--acc:#e8875a;--red:#f28b82;--amb:#e0b44a;--grn:#7bc98f;--blu:#83b0e8}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.55 ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+.wrap{max-width:900px;margin:0 auto;padding:20px 16px 60px}
+h1{font-size:20px;margin:0 0 2px}h2{font-size:14px;letter-spacing:.06em;text-transform:uppercase;color:var(--dim);margin:26px 0 10px}
+.sub{color:var(--dim);font-size:13px;margin-bottom:16px}
+.bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin-bottom:16px}
+select,input,button{font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:7px;padding:7px 10px}
+button{cursor:pointer}button.tab{background:transparent;border-color:transparent;color:var(--dim);padding:6px 12px}
+button.tab[aria-selected=true]{background:var(--card);border-color:var(--line);color:var(--ink);font-weight:600}
+.tabs{display:flex;gap:4px;margin-bottom:14px;flex-wrap:wrap}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px;margin-bottom:10px}
+.card.od{border-left:3px solid var(--red)}.card.today{border-left:3px solid var(--amb)}.card.unclear{border-left:3px solid var(--blu)}.card.done{opacity:.62}
+.tt{font-weight:600;margin-bottom:4px}
+.meta{font-size:12.5px;color:var(--dim);display:flex;flex-wrap:wrap;gap:10px;margin-bottom:6px}
+.pill{display:inline-block;font-size:11px;letter-spacing:.04em;text-transform:uppercase;padding:2px 7px;border-radius:20px;border:1px solid currentColor;font-weight:600}
+.p-od{color:var(--red)}.p-today{color:var(--amb)}.p-up{color:var(--dim)}.p-done{color:var(--grn)}.p-unclear{color:var(--blu)}
+.note{font-size:13px;color:var(--dim);margin-top:6px}
+details{margin-top:8px}summary{cursor:pointer;font-size:12.5px;color:var(--acc)}
+ul.src{margin:8px 0 0;padding-left:18px;font-size:12.5px;color:var(--dim)}ul.src li{margin:2px 0}
+.empty{color:var(--dim);font-size:13.5px;padding:8px 2px}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0}
+.chip{font-size:12.5px;background:var(--card);border:1px solid var(--line);border-radius:20px;padding:5px 11px;cursor:pointer;color:var(--dim)}
+.ans{background:var(--card);border:1px solid var(--line);border-left:3px solid var(--acc);border-radius:10px;padding:14px;margin-top:12px;white-space:pre-wrap;font-size:14px}
+.row{display:flex;gap:8px;margin-top:10px}.row input{flex:1}
+code{background:var(--bg);border:1px solid var(--line);padding:1px 5px;border-radius:4px;font-size:12.5px}
+</style></head><body><div class="wrap">
+
+<h1>Executive Productivity Agent</h1>
+<div class="sub">User: <strong>Arjun Malhotra</strong>, VP Sales · Veridian Corp · Week of 21–25 Sep 2026</div>
+
+<div class="bar">
+  <label style="font-size:13px;color:var(--dim)">Agent clock</label>
+  <select id="now"></select>
+  <span style="flex:1"></span>
+  <button id="thm" title="Toggle theme">◐</button>
+</div>
+
+<div class="tabs" role="tablist">
+  <button class="tab" data-v="brief" aria-selected="true">Daily Brief</button>
+  <button class="tab" data-v="board" aria-selected="false">Action Board</button>
+  <button class="tab" data-v="ask" aria-selected="false">Ask the Agent</button>
+  <button class="tab" data-v="how" aria-selected="false">How it works</button>
+</div>
+
+<div id="view"></div>
+</div>
+
+<script>
+// ---------- SOURCE DATA (grounded only in the supplied data pack) ----------
+const PEOPLE={arjun:"Arjun Malhotra",neha:"Neha Kapoor",raghav:"Raghav Sethi",divya:"Divya Rao",priya:"Priya Nair (Meridian)",fac:"Facilities"};
+const ITEMS=[
+{id:"vendor",title:"Send the updated vendor list to Raghav",owner:"mine",who:"raghav",
+ created:"2026-09-21T09:35",due:"2026-09-23T12:00",done:null,
+ commit:"Arjun committed to this in the Monday sync, then re-committed twice by email.",
+ slips:["Mon 21, sync: “by end of day tomorrow” (→ Tue)","Mon 21, 5:40 PM email: “first thing tomorrow morning”","Tue 22, 6:30 PM email: “by tomorrow (Wednesday) morning for sure”"],
+ sources:["Leadership Sync transcript, Mon 21 Sep — Arjun: “I told Raghav I’d send him the updated vendor list.”","Email thread “Vendor List”, msgs 1–5 (Mon 21 – Wed 23)","Voice Note 1, Mon 21 Sep 6:40 PM — “need to get Raghav that vendor list… remind me.”"],
+ note:"Three sources describe one commitment — merged into a single action. No message in the data shows the list was ever actually sent; last inbound is Raghav chasing on Wed 8:45 AM."},
+{id:"deck",title:"Review Neha’s Q3 campaign deck (9:30 AM Thu, before board prep)",owner:"waiting",flipTo:"mine",flipAt:"2026-09-24T08:00",who:"neha",
+ created:"2026-09-21T09:35",due:"2026-09-24T09:30",done:"2026-09-24T10:00",
+ commit:"Neha owns delivery; Arjun owns the review slot.",
+ slips:["Sync + email 1: review targeted Wednesday","Sync (Neha, later): “realistically Thursday morning is safer”","Tue 22, 4:15 PM email: formally moved to Thursday","Wed 23, 10:20 AM: time fixed at 9:30 AM"],
+ sources:["Leadership Sync transcript, Mon 21 Sep (both the Wednesday commitment and Neha’s later correction)","Email thread “Q3 Campaign Deck”, msgs 1–5","Arjun’s calendar: Thu 24, 9:30–10:00 AM Deck Review with Neha"],
+ note:"Latest source wins: the Wednesday date from the transcript is superseded by Neha’s Tue 4:15 PM email. Deck arrived Thu 8:00 AM, so the item flips from “waiting on Neha” to “my action”."},
+{id:"meridian",title:"Lock in a new time for the Meridian Logistics call with Priya",owner:"mine",who:"priya",
+ created:"2026-09-21T09:35",due:"2026-09-23T15:00",done:"2026-09-23T14:00",
+ commit:"Arjun explicitly kept this himself: “I need to reconfirm the new time with their team myself.”",
+ slips:["Priya asked Mon 1:00 PM; Arjun replied only Tue 3:00 PM (~26h latency)","Wednesday 3:00 PM proposed, confirmed by Priya Tue 5:45 PM, re-confirmed by Arjun Wed 2:00 PM"],
+ sources:["Leadership Sync transcript, Mon 21 Sep","Email thread “Call Reschedule”, msgs 1–5","Voice Note 2, Wed 23 Sep 8:15 AM — “I owe Priya a time, need to lock that in today.”","Arjun’s calendar: Wed 23, 3:00–3:30 PM Call — Meridian Logistics"],
+ note:"Closed. Confirmed on Wed 2:00 PM for a 3:00 PM call the same day."},
+{id:"expense",title:"July expense variance report from Divya (ahead of board prep)",owner:"waiting",who:"divya",
+ created:"2026-09-21T09:35",due:"2026-09-23T18:00",done:"2026-09-23T18:00",
+ commit:"Divya owns delivery. Arjun moved the deadline earlier, from Thursday to Wednesday evening.",
+ slips:["Sync: “before Thursday’s board prep”; Divya offered Wednesday evening","Tue 22, 9:00 AM email: Arjun pulled it to Wednesday evening","Divya confirmed Tue 9:40 AM: “tight but doable”"],
+ sources:["Leadership Sync transcript, Mon 21 Sep","Email thread “Expense Variance Report”, msgs 1–5","Voice Note 2, Wed 23 Sep 8:15 AM — “needs to be in my hands by Wednesday evening, not Thursday.”"],
+ note:"Closed. Delivered Wed 6:00 PM and acknowledged by Arjun at 6:10 PM."},
+{id:"mumbai",title:"Mumbai office lease renewal — authorised signature",owner:"unclear",who:null,
+ created:"2026-09-21T10:15",due:"2026-09-25T18:00",done:null,
+ commit:"⚠ No owner is established anywhere in the source data. The agent will not assign one.",
+ slips:["Raghav (sync): “Not sure whose desk that’s on right now.”","Divya (sync): “I think that’s supposed to be Facilities” — belief, not confirmation","Arjun (sync): “Okay, flag it, don’t assume.”","Divya (Wed email): “I believe this typically sits with Facilities directly, not us.”","Voice Note 1: “someone needs to own that, I don’t think it’s me.”","Facilities sent two all-staff reminders, neither naming an owner"],
+ sources:["Leadership Sync transcript, Mon 21 Sep","Email thread “Mumbai Office Lease Renewal”, msgs 1–5","Voice Note 1, Mon 21 Sep 6:40 PM"],
+ note:"Every candidate owner is hedged (“I think”, “I believe”, “I don’t think it’s me”). Hard deadline Fri 25 Sep, end of day. Escalate — do not infer an owner."},
+{id:"mumbai-reply",title:"Reply to Raghav on who is handling the Mumbai renewal",owner:"mine",who:"raghav",
+ created:"2026-09-24T16:45",due:"2026-09-25T12:00",done:null,
+ commit:"Direct, unanswered ask addressed to Arjun.",
+ slips:["Thu 24, 4:45 PM — Raghav: “This is now one day out and still unowned — can you confirm who’s handling it?”"],
+ sources:["Email thread “Mumbai Office Lease Renewal”, msg 5"],
+ note:"Distinct from the signature itself: Arjun owns the reply, not (necessarily) the signature. Arjun has a Facilities Check-in on his calendar Fri 25, 10:00–10:30 AM — the natural forcing point."}];
+
+const CLOCKS=[["2026-09-21T10:00","Mon 21 Sep, 10:00 AM"],["2026-09-22T09:30","Tue 22 Sep, 9:30 AM"],["2026-09-23T09:00","Wed 23 Sep, 9:00 AM"],["2026-09-23T17:00","Wed 23 Sep, 5:00 PM"],["2026-09-24T09:00","Thu 24 Sep, 9:00 AM"],["2026-09-24T17:30","Thu 24 Sep, 5:30 PM"],["2026-09-25T09:00","Fri 25 Sep, 9:00 AM"]];
+const CAL={"2026-09-21":["9:00–9:35 Leadership Sync","2:00–2:30 1:1 with Neha","4:00–5:00 Blocked"],"2026-09-22":["11:00–12:00 Internal Budget Review","3:00–3:30 Blocked"],"2026-09-23":["3:00–3:30 Call — Meridian Logistics","6:00–6:15 Blocked"],"2026-09-24":["9:00–10:00 Board Prep Session","4:00–5:00 Hiring Panel — Sales Associate"],"2026-09-25":["10:00–10:30 Facilities Check-in","1:00–2:00 Blocked"]};
+
+// ---------- ENGINE ----------
+let NOW=CLOCKS[5][0];
+const D=s=>new Date(s+":00");
+const day=s=>s.slice(0,10);
+const fmt=s=>D(s).toLocaleString("en-GB",{weekday:"short",day:"numeric",month:"short",hour:"numeric",minute:"2-digit",hour12:true});
+function resolve(it){
+  const n=D(NOW);
+  let owner=it.owner;
+  if(it.flipTo&&n>=D(it.flipAt))owner=it.flipTo;
+  let st;
+  if(it.done&&n>=D(it.done))st="done";
+  else if(owner==="unclear")st="unclear";
+  else if(n>D(it.due))st="overdue";
+  else if(day(it.due)===day(NOW))st="today";
+  else st="upcoming";
+  return{...it,owner,st,visible:n>=D(it.created)};
+}
+const state=()=>ITEMS.map(resolve).filter(i=>i.visible);
+const LBL={overdue:"Overdue",today:"Due today",upcoming:"Upcoming",done:"Closed",unclear:"Ownership unclear"};
+const CLS={overdue:"od",today:"today",upcoming:"",done:"done",unclear:"unclear"};
+
+function card(i){
+  const who=i.who?PEOPLE[i.who]:"unassigned";
+  const role=i.owner==="mine"?"My action":i.owner==="waiting"?"Waiting on "+who:"Unowned";
+  return`<div class="card ${CLS[i.st]}">
+   <div class="tt">${i.title}</div>
+   <div class="meta"><span class="pill p-${i.st==="overdue"?"od":i.st==="today"?"today":i.st==="done"?"done":i.st==="unclear"?"unclear":"up"}">${LBL[i.st]}</span>
+   <span>${role}</span><span>Due ${fmt(i.due)}</span><span>${i.sources.length} source${i.sources.length>1?"s":""} merged</span></div>
+   <div class="note">${i.note}</div>
+   <details><summary>Provenance &amp; timeline</summary>
+     <div class="note" style="margin-top:8px"><strong>Basis:</strong> ${i.commit}</div>
+     <ul class="src">${i.slips.map(s=>"<li>"+s+"</li>").join("")}</ul>
+     <div class="note" style="margin-top:8px"><strong>Sources:</strong></div>
+     <ul class="src">${i.sources.map(s=>"<li>"+s+"</li>").join("")}</ul>
+   </details></div>`;
+}
+function group(list,t){return`<h2>${t} <span style="color:var(--dim);font-weight:400">(${list.length})</span></h2>`+(list.length?list.map(card).join(""):`<div class="empty">Nothing here.</div>`);}
+
+function brief(){
+  const s=state(),od=s.filter(i=>i.st==="overdue"),td=s.filter(i=>i.st==="today"),
+   un=s.filter(i=>i.st==="unclear"),wt=s.filter(i=>i.owner==="waiting"&&i.st!=="done"),
+   up=s.filter(i=>i.st==="upcoming"&&i.owner==="mine"),dn=s.filter(i=>i.st==="done");
+  const cal=CAL[day(NOW)]||[];
+  return`<div class="card"><div class="tt">Brief for ${D(NOW).toLocaleDateString("en-GB",{weekday:"long",day:"numeric",month:"long"})}</div>
+   <div class="note">${od.length} overdue · ${td.length} due today · ${un.length} blocked on ownership · ${wt.length} waiting on others · ${dn.length} closed this week</div>
+   <div class="note" style="margin-top:8px"><strong>Today’s calendar:</strong> ${cal.length?cal.join(" · "):"nothing scheduled"}</div></div>
+  ${group(od,"Overdue — act first")}${group(td,"Due today")}${group(un,"Flagged: ownership unclear")}
+  ${group(wt,"Waiting on others")}${group(up,"Coming up")}${group(dn,"Closed")}`;
+}
+function board(){
+  const s=state();
+  return group(s.filter(i=>i.owner==="mine"),"My actions")+group(s.filter(i=>i.owner==="waiting"),"Waiting on others")+group(s.filter(i=>i.owner==="unclear"),"Unclear ownership");
+}
+
+// ---------- Q&A ----------
+const Q=["What did I promise Raghav?","What needs action today?","What's overdue?","What am I waiting on?","Who owns the Mumbai lease?","What did I promise Priya?","Show me everything for Neha"];
+function ask(q){
+  const t=q.toLowerCase(),s=state();
+  const nameHit=Object.keys(PEOPLE).find(k=>t.includes(k));
+  const say=(h,list,none)=>h+"\n\n"+(list.length?list.map(i=>"• "+i.title+"\n   "+LBL[i.st]+" · due "+fmt(i.due)+(i.owner==="waiting"?" · waiting on "+PEOPLE[i.who]:"")+"\n   Source: "+i.sources[0]).join("\n\n"):none);
+  if(/overdue|late|slipp|behind/.test(t))return say("Overdue as of "+fmt(NOW)+":",s.filter(i=>i.st==="overdue"),"Nothing is overdue right now.");
+  if(/today|now|next|action/.test(t)&&!nameHit)return say("Needs action today ("+D(NOW).toLocaleDateString("en-GB",{weekday:"long",day:"numeric",month:"short"})+"):",s.filter(i=>(i.st==="overdue"||i.st==="today")&&i.owner!=="waiting"),"Nothing due today on your plate.");
+  if(/waiting|blocked on|chasing|owe me/.test(t))return say("You're waiting on:",s.filter(i=>i.owner==="waiting"&&i.st!=="done"),"You're not waiting on anyone right now.");
+  if(/mumbai|lease|unclear|unowned|who owns|sign/.test(t)){
+    const m=s.find(i=>i.id==="mumbai");
+    if(!m)return"That item hasn't surfaced yet at the current agent clock.";
+    return"⚠ Ownership is unconfirmed — I won't guess.\n\n"+m.title+"\nDeadline: "+fmt(m.due)+"\n\nWhat the sources actually say:\n"+m.slips.map(x=>"• "+x).join("\n")+"\n\nEvery candidate is hedged, so the correct output is an escalation, not an assignment. Suggested move: raise it at your Facilities Check-in, Fri 25 Sep 10:00 AM, and reply to Raghav in the meantime.";
+  }
+  if(nameHit){
+    const rel=s.filter(i=>i.who===nameHit);
+    const mine=rel.filter(i=>i.owner==="mine"),theirs=rel.filter(i=>i.owner==="waiting");
+    if(!rel.length)return"Nothing in the sources ties an open item to "+PEOPLE[nameHit]+".";
+    let out="Re: "+PEOPLE[nameHit]+"\n";
+    if(mine.length)out+="\nYou promised "+PEOPLE[nameHit]+":\n"+mine.map(i=>"• "+i.title+"\n   "+LBL[i.st]+" · due "+fmt(i.due)+"\n   Restated: "+i.slips.map(x=>"– "+x).join("\n   ")).join("\n\n");
+    if(theirs.length)out+="\n\n"+PEOPLE[nameHit]+" owes you:\n"+theirs.map(i=>"• "+i.title+" — "+LBL[i.st]).join("\n");
+    return out;
+  }
+  if(/closed|done|finish/.test(t))return say("Closed this week:",s.filter(i=>i.st==="done"),"Nothing closed yet.");
+  return"I answer from the reconciled action store only. Try:\n"+Q.map(x=>"• "+x).join("\n");
+}
+function askView(){
+  return`<div class="card"><div class="tt">Ask the agent</div><div class="note">Answers come from the reconciled action store, never from free generation — so every reply carries its source.</div>
+  <div class="chips">${Q.map(q=>`<span class="chip" data-q="${q}">${q}</span>`).join("")}</div>
+  <div class="row"><input id="qi" placeholder="Ask a question…"><button id="qb">Ask</button></div></div><div id="qa"></div>`;
+}
+function how(){return`<div class="card"><div class="tt">Pipeline</div><div class="note" style="margin-top:8px">
+<code>Ingest</code> → <code>Extract</code> → <code>Reconcile</code> → <code>Classify</code> → <code>Brief / Q&amp;A</code></div>
+<ul class="src" style="font-size:13.5px;margin-top:10px">
+<li><strong>Ingest</strong> — 1 transcript, 4 calendars, 5 email threads (25 messages), 2 voice notes.</li>
+<li><strong>Extract</strong> — each source yields candidate commitments with speaker, addressee, promised date and a verbatim anchor.</li>
+<li><strong>Reconcile (dedup)</strong> — candidates are clustered by (subject, counterparty). The vendor list appears in 3 sources and 5 emails but is one action. Within a cluster the <em>latest</em> statement wins, and superseded dates are kept as a slip trail rather than deleted.</li>
+<li><strong>Classify</strong> — owner is set only from an explicit first-person commitment ("I'll send…") or an explicit acceptance ("I'll have it ready"). Anything hedged with "I think" / "I believe" / "not sure" is routed to <strong>unclear</strong>, never assigned.</li>
+<li><strong>Status</strong> — computed against the agent clock, so the same data produces a different brief on Monday than on Friday. Items are hidden before their creation timestamp; nothing is known before it was said.</li>
+<li><strong>Q&amp;A</strong> — retrieval over the reconciled store with provenance attached. No answer can exist without a source row behind it.</li></ul></div>
+<div class="card"><div class="tt">Design decisions worth defending</div><ul class="src" style="font-size:13.5px">
+<li><strong>Latest-wins with an audit trail.</strong> Neha said Wednesday in the sync and Thursday by email; the brief shows Thursday but keeps the Wednesday claim visible.</li>
+<li><strong>Re-commitment is a signal.</strong> The vendor list slipped three times — the agent surfaces the slip count, which is what actually predicts failure.</li>
+<li><strong>Refusal to infer ownership.</strong> Three people gesture at Facilities for the Mumbai lease; none confirms. The agent escalates instead of assigning, matching Arjun's own instruction: "flag it, don't assume."</li>
+<li><strong>A reply is not the task.</strong> Raghav's Thursday 4:45 PM question creates an action Arjun owns, separate from the signature he may not own.</li>
+<li><strong>Voice notes are first-person.</strong> They are treated as Arjun's own commitments, not third-party instructions.</li></ul></div>`;}
+
+// ---------- SHELL ----------
+let VIEW="brief";
+const $=s=>document.querySelector(s);
+function render(){
+  $("#view").innerHTML=VIEW==="brief"?brief():VIEW==="board"?board():VIEW==="ask"?askView():how();
+  if(VIEW==="ask"){
+    $("#qb").onclick=()=>{const v=$("#qi").value.trim();if(v)$("#qa").innerHTML='<div class="ans">'+ask(v).replace(/</g,"&lt;")+"</div>";};
+    $("#qi").onkeydown=e=>{if(e.key==="Enter")$("#qb").click();};
+    document.querySelectorAll(".chip").forEach(c=>c.onclick=()=>{$("#qi").value=c.dataset.q;$("#qb").click();});
+  }
+}
+const sel=$("#now");CLOCKS.forEach(([v,l],i)=>{const o=document.createElement("option");o.value=v;o.textContent=l;if(i===5)o.selected=true;sel.appendChild(o);});
+sel.onchange=e=>{NOW=e.target.value;render();};
+document.querySelectorAll(".tab").forEach(b=>b.onclick=()=>{VIEW=b.dataset.v;document.querySelectorAll(".tab").forEach(x=>x.setAttribute("aria-selected",x===b));render();});
+$("#thm").onclick=()=>{const r=document.documentElement;r.dataset.theme=r.dataset.theme==="dark"?"light":"dark";};
+render();
+</script></body></html>
